@@ -20,6 +20,13 @@ struct ifi_info{
 	struct sockaddr *ifi_addr;
 	struct sockaddr *ifi_brdaddr;
 	struct sockaddr *ifi_dstaddr;
-	struct sock
+	struct sockaddr *ifi_next;
 };
+
+#define IFI_ALIAS 1
+
+struct ifi_info *get_ifi_info(int, int);
+struct ifi_info *Get_ifi_info(int, int);
+void   free_ifi_info(struct ifi_info *);
+
 #endif
