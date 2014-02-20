@@ -112,3 +112,19 @@ void setfl(int fd,int flags)
 		err_sys("fcntl F_SETFL error\n");
 }
 
+void parseIPAndPort(const char *str, char *ip, int &port)
+{
+	int i = 0;
+	while(i < strlen(str) && str[i] != ':') i++;
+
+	assert(i != strlen(str));
+
+	memcpy(ip, str, i);
+	i++; port = 0;
+	while(i < strlen(str))
+	{
+		assert(str[i] >= '0' && str[i] <= '9');
+		port = port*10 + (str[i] - '0');
+		i++;
+	}
+}

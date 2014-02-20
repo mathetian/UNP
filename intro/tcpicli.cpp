@@ -1,8 +1,7 @@
-#include "unp.h"
-#include "unp.cpp"
-#include "read.cpp"
-
-#define SERV_PORT 8085
+#include "../unp.h"
+#include "../unp.cpp"
+#include "../read.cpp"
+#include "wrap.cpp"
 
 void str_cli(FILE * fp, int sockfd)
 {
@@ -24,25 +23,32 @@ int main(int argc, char*argv[])
 	int sockfd;
 	struct sockaddr_in servaddr;
 
-	if(argc != 2)  err_quit("Usage: tcpicli <IPAddress>");
+	char ip[256]; int port;
+	memset(ip, 0, sizeof(ip));
 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd == -1) err_sys("Socket error");
+	if(argc != 2)  
+		err_quit("Usage: tcpicli <IPAddress:Port>");
+	else
+	{
+		parseIPAndPort(argv[1], ip, port);
+	}
+	printf("%s %d\n", ip, port);
+	sockfd = Socket(AF_INET, SOCK_STREAM, 0);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(SERV_PORT);
+	servaddr.sin_port = htons(port);
 
-	if(inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0)
-		err_quit("inet_pton error for %s",argv[1]);
+	if(inet_pton(AF_INET, ip, &servaddr.sin_addr) <= 0)
+		err_quit("inet_pton error for %s", ip);
 
-	if(connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) == -1)
-		err_sys("Connect error");
+	Connect(sockfd, (SA*)&servaddr, sizeof(servaddr));
 
 	printf("Connected successfully\n");
 
 	str_cli(stdin, sockfd);
 
 	printf("End Connected\n");
+	
 	exit(0);
 }
