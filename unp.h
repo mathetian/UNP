@@ -29,7 +29,8 @@
 
 
 #define MAXLINE 100
-#define	LISTENQ		1024
+#define	LISTENQ 1024
+#define OPEN_MAX 50
 
 typedef struct sockaddr SA;
 

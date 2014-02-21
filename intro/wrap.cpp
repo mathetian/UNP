@@ -59,7 +59,11 @@ size_t Recvfrom(int fd, void *ptr, size_t nbytes, int flags,
 	size_t		n;
 
 	if ( (n = recvfrom(fd, ptr, nbytes, flags, sa, salenptr)) < 0)
-		err_sys("recvfrom error");
+	{
+		if(errno == EINTR) fprintf(stderr, "socket timeout\n");
+		else err_sys("recvfrom error");
+	}
+
 	return n;
 }
 
@@ -83,13 +87,13 @@ int Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
 
 void Send(int fd, const void *ptr, size_t nbytes, int flags)
 {
-	if (send(fd, ptr, nbytes, flags) != (ssize_t)nbytes)
+	if (send(fd, ptr, nbytes, flags) != (size_t)nbytes)
 		err_sys("send error");
 }
 
 void Sendto(int fd, const void *ptr, size_t nbytes, int flags, const struct sockaddr *sa, socklen_t salen)
 {
-	if (sendto(fd, ptr, nbytes, flags, sa, salen) != (ssize_t)nbytes)
+	if (sendto(fd, ptr, nbytes, flags, sa, salen) != (size_t)nbytes)
 		err_sys("sendto error");
 }
 
@@ -98,4 +102,34 @@ void Shutdown(int fd, int how)
 {
 	if (shutdown(fd, how) < 0)
 		err_sys("shutdown error");
+}
+
+void Inet_pton(int family, const char *strptr, void * addrptr)
+{
+	if(family == AF_INET)
+	{
+		struct in_addr in_val;
+		if(inet_aton(strptr, &in_val))
+		{
+			memcpy(addrptr, &in_val, sizeof(struct in_addr));
+		}
+		else err_quit("parse error");
+	}
+	else
+		err_quit("family error");
+}
+
+void Write(int fd, void *ptr, size_t nbytes)
+{
+	if (write(fd, ptr, nbytes) != nbytes)
+		err_sys("write error");
+}
+
+size_t Read(int fd, void *ptr, size_t nbytes)
+{
+	size_t		n;
+
+	if ( (n = read(fd, ptr, nbytes)) == -1)
+		err_sys("read error");
+	return(n);
 }

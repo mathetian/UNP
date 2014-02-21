@@ -1,45 +1,44 @@
-#include "unp.h"
-#include "read.cpp"
-#include "unp.cpp"
+#include "../unp.h"
+#include "../read.cpp"
+#include "../unp.cpp"
+
+#include "wrap.cpp"
 
 #include <limits.h>
+#include <sys/poll.h>
 
 #define SERV_PORT 8085
 
 int main(int argc, char*argv[])
 {
-	int i, maxi, listenfd, connfd, sockfd;
-	int nready, flag;
-	struct pollfd client[OPEN_MAX];
+	int listenfd, connfd, sockfd;
+	struct sockaddr_in cliaddr, servaddr;
+	socklen_t clilen;
 
-	ssize_t n;
+	int nready, i, maxi;
+	size_t n;
+
+	struct pollfd client[OPEN_MAX];
 	fd_set rset, allset;
 
 	char buf[MAXLINE];
-	socklen_t clilen;
-	struct sockaddr_in cliaddr, servaddr;
 
-	listenfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(listenfd == -1) err_sys("Socket error");
+	listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(SERV_PORT);
 
-	flag = bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
-	if(flag == -1) err_sys("Bind error");
+	Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
 
-	flag = listen(listenfd, LISTENQ);
-	if(flag == -1) err_sys("Listen error");
-
-	clilen = sizeof(cliaddr);
+	Listen(listenfd, LISTENQ);
 
 	printf("Begin Listen in the port %d\n", SERV_PORT);
 
 	maxi = -1;
 
-	client[0].fd = listenfd;
+	client[0].fd     = listenfd;
 	client[0].events = POLLRDNORM;
 
 	for(i = 1;i < OPEN_MAX;i++)
@@ -47,13 +46,14 @@ int main(int argc, char*argv[])
 
 	while(true)
 	{
+#ifndef INFTIM
+	#define INFTIM -1
+#endif
 		nready = poll(client, maxi + 1, INFTIM);
 
 		if(client[0].revents & POLLRDNORM)
 		{
-			connfd = accept(listenfd, (SA*)&cliaddr, &clilen);
-			if(connfd == -1 && errno == EINTR) continue;
-			if(connfd == -1) err_sys("Accept error");
+			connfd = Accept(listenfd, (SA*)&cliaddr, &clilen);
 			
 			for(i = 0;i < OPEN_MAX;i++)
 			{

@@ -1,8 +1,10 @@
-#include "unp.h"
-#include "read.cpp"
-#include "unp.cpp"
+#include "../unp.h"
+#include "../read.cpp"
+#include "../unp.cpp"
 
-#define SERV_PORT 8085
+#include "wrap.cpp"
+
+#define SERV_PORT 8086
 
 void sig_chld(int signo)
 {
@@ -20,48 +22,44 @@ void str_echo(int sockfd)
 	ssize_t n;
 	char buf[MAXLINE];
 
-again:
-	while((n=read(sockfd, buf, MAXLINE)) > 0)
+	while((n=read(sockfd, buf, MAXLINE)) != 0)
 	{
-		printf("%s",buf);
+		if(n < 0 && errno == EINTR)
+			continue;
+		else if(n < 0) 
+			break;
 		writen(sockfd, buf, n);
 	}
 		
-	if(n < 0 && errno == EINTR) goto again;
-	else if(n < 0) err_sys("str_echo: read_error");
+	if(n < 0) err_sys("str_echo: read_error");
 }
 
 int main(int argc, char*argv[])
 {
-	int listenfd, connfd; int flag;
-	pid_t childpid;
-	socklen_t clilen;
+	int listenfd, connfd;
 	struct sockaddr_in cliaddr, servaddr;
+	socklen_t clilen; pid_t childpid;
 
-	listenfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(listenfd == -1) err_sys("Socket error");
+	listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(SERV_PORT);
 
-	flag = bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
-	if(flag == -1) err_sys("Bind error");
+	Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
 
-	flag = listen(listenfd, LISTENQ);
-	if(flag == -1) err_sys("Listen error");
+	Listen(listenfd, LISTENQ);
 
 	clilen = sizeof(cliaddr);
 
 	printf("Begin Listen in the port %d\n", SERV_PORT);
 
 	signal(SIGCHLD, sig_chld);
+
 	while(true)
 	{
-		connfd = accept(listenfd, (SA*)&cliaddr, &clilen);
-		if(connfd == -1 && errno == EINTR) continue;
-			if(connfd == -1) err_sys("Accept error");
+		connfd = Accept(listenfd, (SA*)&cliaddr, &clilen);
 
 		if((childpid = fork()) < 0)
 			err_sys("Fork error");

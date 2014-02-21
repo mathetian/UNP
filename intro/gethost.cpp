@@ -1,11 +1,18 @@
-#include "unp.h"
-#include "unp.cpp"
+#include "../unp.h"
+#include "../unp.cpp"
+
 
 int main(int argc, char*argv[])
 {
 	char *ptr, **pptr;
 	char str[INET_ADDRSTRLEN];
 	struct hostent *hptr;
+
+	if(argc == 1)
+	{
+		printf("Usage: gethost <www.baidu.com>\n");
+		return 0;
+	}
 
 	while(--argc > 0)
 	{
@@ -15,6 +22,7 @@ int main(int argc, char*argv[])
 			err_msg("gethostbyname error for host: %s : %s", ptr, hstrerror(h_errno));
 			continue;
 		}
+		
 		printf("officical hostname: %s\n",hptr->h_name);
 		for(pptr = hptr -> h_aliases;*pptr != NULL;pptr++)
 			printf("\t alases: %s\n", *pptr);
