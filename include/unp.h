@@ -89,13 +89,16 @@ size_t  Readn(int fd, void * vptr, size_t n);
 size_t  Writen(int fd, const void * vptr, size_t n);
 ssize_t Readline(int fd,void*vptr,size_t maxlen);
 
+size_t Read_fd(int fd, void *ptr, size_t nbytes, int *recvfd);
+size_t Write_fd(int fd, void *ptr, size_t nbytes, int sendfd);
+
 inline int max(int a, int b)
 {
-	return a > b ? a : b;
+    return a > b ? a : b;
 }
 
 inline int min(int a, int b)
 {
-	return a > b ? b : a;
+    return a > b ? b : a;
 }
 #endif

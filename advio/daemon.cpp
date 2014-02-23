@@ -6,36 +6,36 @@ extern int daemon_proc;
 
 int daemon_init(const char *pname, int facility)
 {
-	int i;
-	pid_t pid;
-	if((pid = fork()) < 0) return -1;
-	else if(pid) exit(0);
-	if(setsid() < 0) return -1;
+    int i;
+    pid_t pid;
+    if((pid = fork()) < 0) return -1;
+    else if(pid) exit(0);
+    if(setsid() < 0) return -1;
 
-	signal(SIGHUP, SIG_IGN);
-	
-	if((pid = fork()) < 0) 
-		return -1;
-	else if(pid) exit(0);
+    signal(SIGHUP, SIG_IGN);
 
-	daemon_proc = 1;
-	chdir("/");
+    if((pid = fork()) < 0)
+        return -1;
+    else if(pid) exit(0);
 
-	for(i = 0;i < MAXFD;i++) close(i);
+    daemon_proc = 1;
+    chdir("/");
 
-	open("/dev/null", O_RDONLY);
-	open("/dev/null", O_RDWR);
-	open("/dev/null", O_RDWR);
+    for(i = 0; i < MAXFD; i++) close(i);
 
-	openlog(pname, LOG_PID, facility);
+    open("/dev/null", O_RDONLY);
+    open("/dev/null", O_RDWR);
+    open("/dev/null", O_RDWR);
 
-	return 0;
+    openlog(pname, LOG_PID, facility);
+
+    return 0;
 }
 
 void daemon_inted(const char *pname, int facility)
 {
-	daemon_proc = 1;
-	openlog(pname, LOG_PID, facility);
+    daemon_proc = 1;
+    openlog(pname, LOG_PID, facility);
 }
 
 
