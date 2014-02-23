@@ -1,6 +1,4 @@
 #include "unp.h"
-#include "unp.cpp"
-#include <syslog.h>
 
 #define MAXFD 64
 
@@ -15,7 +13,9 @@ int daemon_init(const char *pname, int facility)
 	if(setsid() < 0) return -1;
 
 	signal(SIGHUP, SIG_IGN);
-	if((pid = fork()) < 0) return -1;
+	
+	if((pid = fork()) < 0) 
+		return -1;
 	else if(pid) exit(0);
 
 	daemon_proc = 1;

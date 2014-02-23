@@ -1,7 +1,4 @@
-#include "../unp.h"
-#include "../unp.cpp"
-
-#include "../read.cpp"
+#include "../include/unp.h"
 
 char * gf_time()
 {
@@ -47,10 +44,14 @@ void str_cli(FILE *fp, int sockfd)
 
 		if(stdineof == 0 && toiptr < &to[MAXLINE]) FD_SET(STDIN_FILENO, &rset);
 		
-		if(friptr < &fr[MAXLINE]) FD_SET(sockfd, &rset);
+		if(friptr < fr + MAXLINE) 
+			FD_SET(sockfd, &rset);
 
-		if(tooptr != toiptr) FD_SET(sockfd, &wset);
-		if(froptr != friptr) FD_SET(STDOUT_FILENO, &wset);
+		if(tooptr != toiptr) 
+			FD_SET(sockfd, &wset);
+		
+		if(froptr != friptr) 
+			FD_SET(STDOUT_FILENO, &wset);
 
 		select(maxfdp1, &rset, &wset, NULL, NULL);
 
@@ -139,7 +140,7 @@ void str_cli2(FILE * fp, int sockfd)
 	if((pid = fork()) < 0) err_sys("fork error");
 	else if(pid == 0)
 	{
-		while(readline(sockfd, recvline, MAXLINE) > 0)
+		while(Readline(sockfd, recvline, MAXLINE) > 0)
 			puts(recvline);
 
 		kill(getppid(), SIGTERM);

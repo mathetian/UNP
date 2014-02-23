@@ -1,7 +1,4 @@
 #include "unp.h"
-#include "unp.cpp"
-
-#include <netinet/tcp.h>
 
 union val{
 	int i_val;
