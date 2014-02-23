@@ -1,5 +1,4 @@
 #include "unp.h"
-#include "unp.cpp"
 
 struct addrinfo *host_serv(const char *host, const char *serv, int family, int socktype)
 {

@@ -1,6 +1,7 @@
 #ifndef _UNP_H
 #define _UNP_H
 
+#include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -18,6 +19,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #ifdef	HAVE_POLL_H
 # include	<poll.h>		/* for convenience */
@@ -48,9 +50,13 @@ void   Listen(int sockfd, int backlog);
 int    Accpet(int sockfd, struct sockaddr *cliaddr, socklen_t * addrlen);
 
 void parseIPAndPort(const char *str, char *ip, int &port);
-inline int max(int a,int b)
+inline int max(int a, int b)
 {
 	return a > b ? a : b;
 }
 
+inline int min(int a, int b)
+{
+	return a > b ? b : a;
+}
 #endif

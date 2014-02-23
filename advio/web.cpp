@@ -1,11 +1,15 @@
 #include "unp.h"
 #include "unp.cpp"
+#include "gethostlib.cpp"
+#include "read.cpp"
+
+#include "intro/wrap.cpp"
 
 #define MAXFILES 20
 #define SERV "80"
 
 struct file{
-	char *f_namel
+	char *f_name;
 	char *f_host;
 	int f_fd;
 	int f_flags;
@@ -24,9 +28,10 @@ void home_page(const char *, const char *);
 void start_connect(struct file *);
 void write_get_cmd(struct file *);
 
-int main()
+int main(int argc, char *argv[])
 {
-	int i, fd, n, maxnconn, flags, error;
+	int i, fd, maxnconn, flags, error;
+	socklen_t n;
 	char buf[MAXLINE];
 
 	fd_set rs, ws;
@@ -37,8 +42,8 @@ int main()
 
 	for(i = 0;i < nfiles;i++)
 	{
-		file[i].f_name = argv[i+4];
-		file[i].f_host = argv[2];
+		file[i].f_name  = argv[i+4];
+		file[i].f_host  = argv[2];
 		file[i].f_flags = 0;
 	}
 
@@ -55,53 +60,57 @@ int main()
 	{
 		while(nconn < maxnconn && nlefttoconn > 0)
 		{
-			/**find a file to read**/
 			for(i = 0;i < nfiles;i++)
 			{
 				if(file[i].f_flags == 0)
 					break;
+
 				if(i == nfiles)
-					err_quit("nlefttoconn = %d but nothing found",nlefttoconn);
+					err_quit("nlefttoconn = %d but nothing found", nlefttoconn);
+				
 				start_connect(&file[i]);
-				nconn++;
-				nlefttoconn--;
+				
+				nconn++; nlefttoconn--;
 			}
-			rs = rset;
-			ws = wset;
+		}
 
-			n = select(maxfd + 1, &rs, &ws, NULL, NULL);
+		rs = rset;
+		ws = wset;
 
-			for(i = 0;i < nfiles;i++)
+		n = Select(maxfd + 1, &rs, &ws, NULL, NULL);
+
+		for(i = 0;i < nfiles;i++)
+		{
+			flags = file[i].f_flags;
+			if(flags == 0 || flags & F_DONE)
+				continue;
+			
+			fd = file[i].f_fd;
+			
+			if(flags & F_CONNECTING && (FD_ISSET(fd, &rs) || FD_ISSET(fd, &ws)))
 			{
-				flags = file[i].f_flags;
-				if(flags == 0 || flags & F_DONE)
-					continue;
-				fd = file[i].f_fd;
-				if(flags & F_CONNECTING && (FD_ISSET(fd, &rs) || FD_ISSET(fd, &ws)))
+				n = sizeof(error);
+				if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &n) < 0 || error != 0)
 				{
-					n = sizeof(error);
-					if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &n) < 0 || error != 0)
-					{
-						err_ret("nonblocking connect failed for %s", file[i].f_name);
-					}
-					printf("connection established for %s\n", file[i].f_name)l
-					FD_CLR(fd, &wset);
-					write_get_cmd(&file[i]);
+					err_ret("nonblocking connect failed for %s", file[i].f_name);
 				}
-				else if(flags & F_READING && FD_ISSET(fd, &rs))
+				printf("connection established for %s\n", file[i].f_name);
+				FD_CLR(fd, &wset);
+				write_get_cmd(&file[i]);
+			}
+			else if(flags & F_READING && FD_ISSET(fd, &rs))
+			{
+				if((n = read(fd, buf, sizeof(buf))) == 0)
 				{
-					if((n = read(fd, buf, sizeof(buf))) == 0)
-					{
-						printf("end of file on %s\n", file[i].f_name);
-						close(fd);
-						file[i].f_flags = F_DONE;
-						FD_CLR(fd, &rset);
-						nconn--;
-						nlefttoread--;
-					}
-					else
-						printf("read %d bytes from %s\n", n, file[i].f_name);
+					printf("end of file on %s\n", file[i].f_name);
+					close(fd);
+					file[i].f_flags = F_DONE;
+					FD_CLR(fd, &rset);
+					nconn--;
+					nlefttoread--;
 				}
+				else
+					printf("read %d bytes from %s\n", n, file[i].f_name);
 			}
 		}
 	}
@@ -140,10 +149,11 @@ void start_connect(struct file *fptr)
 	flags = fcntl(fd, F_GETFL, 0);
 	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
-
 	if((n = connect(fd, ai->ai_addr, ai->ai_addrlen)) < 0)
 	{
-		if(errno !+ EINPROGRESS) err_sys("nonblocking connect error");
+		if(errno != EINPROGRESS) 
+			err_sys("nonblocking connect error");
+		
 		fptr->f_flags = F_CONNECTING;
 
 		FD_SET(fd, &rset);

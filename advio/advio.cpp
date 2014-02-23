@@ -1,5 +1,6 @@
-#include "unp.h"
-#include "unp.cpp"
+#include "../unp.h"
+#include "../unp.cpp"
+#include "../intro/wrap.cpp"
 
 static void connect_alarm(int);
 
@@ -28,7 +29,6 @@ int connect_timeo(int sockfd, const SA *saptr, socklen_t salen, int nsec)
 
 static void connect_alarm(int signo)
 {
-	/**Just interrupt the connect**/
 	return;
 }
 
@@ -46,8 +46,6 @@ int readable_timeo(int fd, int sec)
 	return select(fd + 1, &rset, NULL, NULL, &tv);
 }
 
-/**A simple demo, as I don't want to place into other files, so here**/
-
 void dg_cli(int sockfd, const SA *pservaddr, socklen_t servlen)
 {
 	int n;
@@ -55,21 +53,48 @@ void dg_cli(int sockfd, const SA *pservaddr, socklen_t servlen)
 
 	while(fgets(sendline, MAXLINE, stdin) != NULL)
 	{
-		int flag = sendto(sockfd, sendline, strlen(sendline), 0, pservaddr, servlen);
-		if(flag != strlen(sendline)) err_sys("sendto error");
+		Sendto(sockfd, sendline, strlen(sendline), 0, pservaddr, servlen);
 
 		if(readable_timeo(sockfd, 5) == 0)
 			fprintf(stderr, "socket timeout\n");
 		else
 		{
-			n = recvfrom(sockfd, recvline, MAXLINE, 0, NULL, NULL);
+			n = Recvfrom(sockfd, recvline, MAXLINE, 0, NULL, NULL);
 			recvline[n] = 0;
 			puts(recvline);
 		}
 	}
 }
 
-/**fileno to FILE* **/
+void dg_cli2(int sockfd, const SA *pservaddr, socklen_t servlen)
+{
+	int n;
+	char sendline[MAXLINE], recvline[MAXLINE + 1];
+
+	struct timeval tv;
+	tv.tv_sec  = 0;
+	tv.tv_usec = 0;
+
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+	while(fgets(sendline, MAXLINE, stdin) != NULL)
+	{
+		Sendto(sockfd, sendline, strlen(sendline), 0, pservaddr, servlen);
+		n = Recvfrom(sockfd, recvline, MAXLINE, 0, NULL, NULL);
+		if(n < 0)
+		{
+			if(errno == EWOULDBLOCK)
+			{
+				fprintf(stderr, "socket timeout\n");
+				continue;
+			}
+			else err_sys("Recvfrom error");
+		}
+	}
+	recvline[n] = 0;
+	puts(recvline);
+}
+
 void str_echo(int sockfd)
 {
 	char line[MAXLINE];

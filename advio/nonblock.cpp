@@ -1,8 +1,7 @@
-#include "unp.h"
-#include "unp.cpp"
+#include "../unp.h"
+#include "../unp.cpp"
 
-#include <time.h>
-#include <sys/time.h>
+#include "../read.cpp"
 
 char * gf_time()
 {
@@ -15,7 +14,7 @@ char * gf_time()
 
 	ptr = ctime(&tv.tv_sec);
 	strcpy(str, &ptr[11]);
-	snprintf(str + 8, sizeof(str) - 8, ".%061d", tv.tv_usec);
+	snprintf(str + 8, sizeof(str) - 8, ".%061d", (int)tv.tv_usec);
 
 	return str;
 }	
@@ -70,7 +69,7 @@ void str_cli(FILE *fp, int sockfd)
 			}
 			else
 			{
-				fprintf(stderr, "%s: read %d bytes from stdin\n", gf_time(), n);
+				fprintf(stderr, "%s: read %d bytes from stdin\n", gf_time(), (int)n);
 				toiptr += n;
 				FD_SET(sockfd, &wset);
 			}
@@ -91,7 +90,7 @@ void str_cli(FILE *fp, int sockfd)
 			}
 			else
 			{
-				fprintf(stderr, "%s: read %d bytes from socket\n", gf_time(), n);
+				fprintf(stderr, "%s: read %d bytes from socket\n", gf_time(), (int)n);
 				friptr += n;
 				FD_SET(STDOUT_FILENO, &wset);
 			}
@@ -106,7 +105,7 @@ void str_cli(FILE *fp, int sockfd)
 			}
 			else
 			{
-				fprintf(stderr, "%s: wrote %d bytes to stdout\n", gf_time(), nwritten);
+				fprintf(stderr, "%s: wrote %d bytes to stdout\n", gf_time(), (int)nwritten);
 				froptr += nwritten;
 				if(froptr == friptr) froptr = friptr = fr;
 			}
@@ -120,7 +119,7 @@ void str_cli(FILE *fp, int sockfd)
 			}
 			else
 			{
-				fprintf(stderr, "%s: wrote %d bytes to socket\n", gf_time(), nwritten);
+				fprintf(stderr, "%s: wrote %d bytes to socket\n", gf_time(), (int)nwritten);
 				tooptr += nwritten;
 				if(tooptr == toiptr)
 				{

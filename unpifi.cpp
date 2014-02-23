@@ -20,8 +20,7 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
 	{
 		buf = (char*)malloc(len);
 		if(buf == NULL) err_sys("malloc error");
-		ifi.ifc_len = len;
-		ifi.ifc_buf = buf;
+		ifi -> ifi_hlen = len;
 
 		if(ioctl(sockfd, SIOCGIFCONF, &ifc) < 0)
 		{
@@ -65,4 +64,9 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
 
 		if((flags & IFF_UP) == 0) continue;
 	}
+}
+
+int main(int argc, char *argv[])
+{
+
 }

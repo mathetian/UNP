@@ -1,9 +1,28 @@
 #include "unp.h"
 #include <net/if.h>
 
+int family_to_level(int family)
+{
+	switch (family) {
+	case AF_INET:
+		return IPPROTO_IP;
+	default:
+		return -1;
+	}
+}
+
+int Family_to_level(int family)
+{
+	int		rc;
+
+	if ( (rc = family_to_level(family)) < 0)
+		err_sys("family_to_level error");
+
+	return(rc);
+}
+
 int mcast_join(int sockfd, const SA *grp, socklen_t grplen, const char *ifname, u_int ifindex)
 {
-#ifdef MCAST_JOIN_GROUP
 	struct group_req req;
 	if(ifindex > 0) req.gr_interface = ifindex;
 	else if(ifname != NULL)
@@ -23,7 +42,4 @@ int mcast_join(int sockfd, const SA *grp, socklen_t grplen, const char *ifname, 
 	}
 	memcpy(&req.gr_group, grp, grplen);
 	return (setsockopt(sockfd, family_to_level(grp->sa_family), MCAST_JOIN_GROUP, &req, sizeof(req)));
-#else
-	
-#endif
 }

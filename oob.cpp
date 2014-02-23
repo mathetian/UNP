@@ -1,10 +1,13 @@
 #include "unp.h"
 #include "unp.cpp"
 
+#include "gethostlib.cpp"
+
 int cli(int argc, char *argv[])
 {
 	int sockfd;
-	if(argc != 3) err_quit("usage tcpsend01 <host> <port #>");
+	if(argc != 3) 
+		err_quit("usage tcpsend01 <host> <port #>");
 
 	sockfd = tcp_connect(argv[1], argv[2]);
 	write(sockfd, "123", 3);
